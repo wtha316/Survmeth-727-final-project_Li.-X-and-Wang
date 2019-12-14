@@ -1,0 +1,738 @@
+---
+title: "integrated"
+output: html_document
+---
+
+---
+title: "dp-analysis-integrated"
+output: html_document
+---
+```{r}
+#install.packages("wordcloud2")
+#install.packages("lubridate")
+#install.packages("jiebaR")
+#install.packages("jiebaRD")
+#install.packages("vcd")
+#install.packages("ggpubr")
+#install.packages("rowr")
+#install.packages("Rsentiment")
+library(rtweet)
+library(twitteR)
+library(syuzhet)
+library(tm)
+library(SnowballC)
+library(tidytext)
+library(ggmap)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(wordcloud2)
+library(jiebaR)
+library(jiebaRD)
+library(vcd)
+library(ggpubr)
+library(rowr)
+library(readr)
+library(stringr)
+library(DT)
+```
+
+
+```{r}
+# import data to excel format
+dp1_1 <- read.csv("dp1-1.csv")
+dp1_2 <- read.csv("dp1-2.csv")
+dp1_3 <- read.csv("dp1-3.csv")
+dp1_4 <- read.csv("dp1-4.csv")
+dp1_5 <- read.csv("dp1-5.csv")
+
+dp2_1 <- read.csv("dp2-1.csv")
+dp2_2 <- read.csv("dp2-2.csv")
+dp2_3 <- read.csv("dp2-3.csv")
+dp2_4 <- read.csv("dp2-4.csv")
+dp2_5 <- read.csv("dp2-5.csv")
+
+dp3_1 <- read.csv("dp3-1.csv")
+dp3_2 <- read.csv("dp3-2.csv")
+dp3_3 <- read.csv("dp3-3.csv")
+dp3_4 <- read.csv("dp3-4.csv")
+dp3_5 <- read.csv("dp3-5.csv")
+dp3_6 <- read.csv("dp3-6.csv")
+dp3_7 <- read.csv("dp3-7.csv")
+dp3_8 <- read.csv("dp3-8.csv")
+dp3_9 <- read.csv("dp3-9.csv")
+dp3_10 <- read.csv("dp3-10.csv")
+dp3_11 <- read.csv("dp3-11.csv")
+dp3_12 <- read.csv("dp3-12.csv")
+dp3_13 <- read.csv("dp3-13.csv")
+dp3_14 <- read.csv("dp3-14.csv")
+dp3_15 <- read.csv("dp3-15.csv")
+dp3_16 <- read.csv("dp3-16.csv")
+dp3_17 <- read.csv("dp3-17.csv")
+dp3_18 <- read.csv("dp3-18.csv")
+dp3_19 <- read.csv("dp3-19.csv")
+dp3_20 <- read.csv("dp3-20.csv")
+dp3_21 <- read.csv("dp3-21.csv")
+```
+
+
+```{r}
+# Conbine data set
+dp1 <- rbind(dp1_1, dp1_2, dp1_3, dp1_4, dp1_5)
+dp2 <- rbind(dp2_1, dp2_2, dp2_3, dp2_4, dp2_5)
+dp3 <- rbind(dp3_1, dp3_2, dp3_3, dp3_4, dp3_5, dp3_6, dp3_7, dp3_8, dp3_9, dp3_10, dp3_11, dp3_12, dp3_13, dp3_14, dp3_15, dp3_16, dp3_17, dp3_18, dp3_19, dp3_20, dp3_21)
+```
+
+
+```{r}
+# Delete data which is duplicated in every columns
+dp1 <- dp1[!duplicated(dp1),]
+dp2 <- dp2[!duplicated(dp2),] 
+dp3 <- dp3[!duplicated(dp3),] 
+```
+
+
+```{r}
+# Random sample, 20000 for each group
+dp1 <- dp1[sample(nrow(dp1), 20000), ]
+dp2 <- dp2[sample(nrow(dp2), 20000), ]
+dp3 <- dp3[sample(nrow(dp3), 20000), ]
+```
+
+
+```{r}
+# Create wordclouds for each group
+# Group 1
+dp1_text <- as.character(dp1$text)
+seg <- qseg[dp1_text] # use seg to cut vocabulary
+seg <- seg[nchar(seg)>1] # delete words that less than 1 unit
+seg
+# Set stopwords
+all_stops <- c("and","of","http","to","for","in","on","the","with","at","or","from")
+seg <- removeWords(seg, all_stops)
+seg <- table(seg)
+seg_50 <- sort(seg, decreasing = TRUE)[1:50]
+# get word frequency (top 50)
+seg_50
+barplot(seg_50)
+wordcloud2(seg,size = 2, minRotation = -pi/2, maxRotation = -pi/2) # Create wordcloud
+
+# Group 2
+dp2_text <- as.character(dp2$text)
+seg <- qseg[dp2_text] # use seg to cut vocabulary
+seg <- seg[nchar(seg)>1] # delete words that less than 1 unit
+seg
+
+seg <- table(seg)
+seg_50 <- sort(seg, decreasing = TRUE)[1:50]
+# get word frequency (top 50)
+seg_50
+barplot(seg_50)
+wordcloud2(seg,size = 2, minRotation = -pi/2, maxRotation = -pi/2) # Create wordcloud
+
+# Group 3
+dp3_text <- as.character(dp3$text)
+seg <- qseg[dp3_text] # use seg to cut vocabulary
+seg <- seg[nchar(seg)>1] # delete words that less than 1 unit
+seg
+# Set stopwords
+all_stops <- c("and","of","http","to","for","in","on","the","with","at","or","from")
+seg <- removeWords(seg, all_stops)
+seg <- table(seg)
+seg_50 <- sort(seg, decreasing = TRUE)[1:50]
+# get word frequency (top 50)
+seg_50
+barplot(seg_50)
+wordcloud2(seg,size = 2, minRotation = -pi/2, maxRotation = -pi/2) # Create wordcloud
+```
+
+
+```{r}
+# merge different groups, add group as a variable
+group_1 <- rep(1, times = nrow(dp1))
+dp1$group <- group_1
+group_2 <- rep(2, times = nrow(dp2))
+dp2$group <- group_2
+group_3 <- rep(3, times = nrow(dp3))
+dp3$group <- group_3
+
+dp_all <- bind_rows(dp1,dp2,dp3)
+dp_all$group = factor (dp_all$group, levels = c(1,2,3), labels = c("depression group", "control group", "diagnosed group"))
+head(dp_all)
+```
+
+
+```{r}
+# check distributions of followers_count, friends_count, listed_count, statuses_count, favourites_count和sentiment_score
+
+# replace outliers with median (followers_count)
+dp_all %>%
+  ggplot(mapping = aes(x = '', y = followers_count)) + 
+  geom_boxplot(outlier.colour = 'red', outlier.shape = 15, width = 1.2)
+QL1 <- quantile(dp_all$followers_count, probs = 0.25) 
+QU1 <- quantile(dp_all$followers_count, probs = 0.75) 
+QU1_QL1 <- QU1 - QL1
+QL1;QU1_QL1;QU1
+which(dp_all$followers_count > QU1 + 1.5*QU1_QL1)
+dp_all$followers_count[which(dp_all$followers_count > QU1 + 1.5*QU1_QL1)]
+
+out_imp01 <- median(dp_all$followers_count)
+dp_all$followers_count[which(dp_all$followers_count > QU1 + 1.5*QU1_QL1)] <- out_imp01
+qqnorm(dp_all$followers_count, ylab = "Number of followers") 
+qqline(dp_all$followers_count)
+# hist distribution
+hist(dp_all$followers_count)
+
+# replace outliers with median (friends_count)
+dp_all %>%
+  ggplot(mapping = aes(x = '', y = friends_count)) + 
+  geom_boxplot(outlier.colour = 'red', outlier.shape = 15, width = 1.2)
+QL2 <- quantile(dp_all$friends_count, probs = 0.25) 
+QU2 <- quantile(dp_all$friends_count, probs = 0.75) 
+QU2_QL2 <- QU2 - QL2
+QL2;QU2_QL2;QU2
+which(dp_all$friends_count > QU2 + 1.5*QU2_QL2)
+dp_all$friends_count[which(dp_all$friends_count > QU2 + 1.5*QU2_QL2)]
+
+out_imp02 <- median(dp_all$friends_count)
+dp_all$friends_count[which(dp_all$friends_count > QU2 + 1.5*QU2_QL2)] <- out_imp02
+qqnorm(dp_all$friends_count, ylab = "Number of friends") 
+qqline(dp_all$friends_count)
+# hist distribution
+hist(dp_all$friends_count)
+
+# replace outliers with median (statuses_count)
+dp_all %>%
+  ggplot(mapping = aes(x = '', y = statuses_count)) + 
+  geom_boxplot(outlier.colour = 'red', outlier.shape = 15, width = 1.2)
+QL3 <- quantile(dp_all$statuses_count, probs = 0.25) 
+QU3 <- quantile(dp_all$statuses_count, probs = 0.75) 
+QU3_QL3 <- QU3 - QL3
+QL3;QU3_QL3;QU3
+which(dp_all$statuses_count > QU3 + 1.5*QU3_QL3)
+dp_all$statuses_count[which(dp_all$statuses_count > QU3 + 1.5*QU3_QL3)]
+
+out_imp03 <- median(dp_all$statuses_count)
+dp_all$statuses_count[which(dp_all$statuses_count > QU3 + 1.5*QU3_QL3)] <- out_imp03
+qqnorm(dp_all$statuses_count, ylab = "Number of statuses") 
+qqline(dp_all$statuses_count)
+# hist distribution
+hist(dp_all$statuses_count)
+
+# replace outliers with median (以favourites_count为例)
+dp_all %>%
+  ggplot(mapping = aes(x = '', y = favourites_count)) + 
+  geom_boxplot(outlier.colour = 'red', outlier.shape = 15, width = 1.2)
+QL4 <- quantile(dp_all$favourites_count, probs = 0.25) 
+QU4 <- quantile(dp_all$favourites_count, probs = 0.75) 
+QU4_QL4 <- QU4 - QL4
+QL4;QU4_QL4;QU4
+which(dp_all$favourites_count > QU4 + 1.5*QU4_QL4)
+dp_all$favourites_count[which(dp_all$favourites_count > QU4 + 1.5*QU4_QL4)]
+
+out_imp04 <- median(dp_all$favourites_count)
+dp_all$favourites_count[which(dp_all$favourites_count > QU4 + 1.5*QU4_QL4)] <- out_imp04
+qqnorm(dp_all$favourites_count, ylab = "Number of favourites") 
+qqline(dp_all$favourites_count)
+# hist distribution
+hist(dp_all$favourites_count)
+```
+
+
+```{r}
+# Descriptive statistics 
+summary(dp_all)
+dp_agg <- dp_all %>%
+  select(followers_count, friends_count, statuses_count, favourites_count, group) 
+dp_stats <- aggregate(dp_agg[,(1:4)], by = list(dp_agg$group), FUN = mean)
+colnames(dp_stats)[1] <- "group"
+dp_stats
+
+dp_all %>% # followers_count
+  group_by(group) %>%
+  summarise(min = min(followers_count), max = max(followers_count), median = median(followers_count), mean = mean(followers_count), sd = sd(followers_count))
+
+dp_all %>% # friends_count
+  group_by(group) %>%
+  summarise(min = min(friends_count), max = max(friends_count), median = median(friends_count), mean = mean(friends_count), sd = sd(friends_count))
+ 
+dp_all %>% # statuses_count
+  group_by(group) %>%
+  summarise(min = min(statuses_count), max = max(statuses_count), median = median(statuses_count), mean = mean(statuses_count), sd = sd(statuses_count))
+
+dp_all %>% # favourites_count
+  group_by(group) %>%
+  summarise(min = min(favourites_count), max = max(favourites_count), median = median(favourites_count), mean = mean(favourites_count), sd = sd(favourites_count))
+
+# plot user features distribution  
+ggplot(mapping = aes(dp_all$followers_count)) + geom_histogram(bins = 100)
+ggplot(mapping = aes(dp_all$friends_count)) + geom_histogram(bins = 100)
+ggplot(mapping = aes(dp_all$statuses_count)) + geom_histogram(bins = 100)
+ggplot(mapping = aes(dp_all$favourites_count)) + geom_histogram(bins = 100)
+
+# plot means of user features among 3 groups
+p1 <- ggplot(data = dp_stats, aes(y = followers_count, x = group, fill = group, xlab = "")) +
+  geom_bar(stat="identity") +
+  theme_classic() +
+  scale_x_discrete(labels = abbreviate)
+p2 <- ggplot(data = dp_stats, aes(y = friends_count, x = group, fill = group, xlab = "")) +
+  geom_bar(stat="identity") +
+  theme_classic() +
+  scale_x_discrete(labels = abbreviate)
+p3 <- ggplot(data = dp_stats, aes(y = statuses_count, x = group, fill = group, xlab = "")) +
+  geom_bar(stat="identity") +
+  theme_classic() +
+  scale_x_discrete(labels = abbreviate)
+p4 <- ggplot(data = dp_stats, aes(y = favourites_count, x = group, fill = group, xlab = "")) +
+  geom_bar(stat="identity") +
+  theme_classic() +
+  scale_x_discrete(labels = abbreviate)
+ggarrange(p1,p2,p3,p4, ncol=2,nrow=2,labels=c("A","B","C","D"))
+  
+# Descriptive statistics (categorical source)
+dp_all %>%
+  group_by(source) %>%
+  summarise(total = n()) %>%
+  filter(source == "Facebook"|source == "Instagram"|source == "Tweetbot for iOS"|source == "TweetDeck"|source == "twittbot.net"|source == "Twitter for Android"|source == "Twitter for iPad"|source == "Twitter for iPhone"|source == "Twitter Web App"|source == "Twitter Web Client") %>%
+  ggplot() +
+  geom_bar(mapping = aes(x = reorder(source, total), y = total), stat = 'identity', fill = 'skyblue2') +
+  coord_flip()
+```
+
+
+```{r}
+# Statistical Analysis - Comparison the Followers over three groups
+# Prepare dataset
+df_folw <- cbind.fill(dp_agg$group, dp_agg$followers_count)
+colnames(df_folw) <- c("group", "folw_n")
+# Group 1 vs. Group 2
+# Test whether the two populations have the same variances
+df_folw_12 <- df_folw %>%
+  filter(group == "depression group" | group == "control group")
+res.ftest <- var.test(folw_n ~ group, data = df_folw_12)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_folw_12 <- t.test(folw_n ~ group, data = df_folw_12, var.equal = TRUE)
+res_folw_12
+# Group 2 vs. Group 3
+# Test whether the two populations have the same variances
+df_folw_23 <- df_folw %>%
+  filter(group == "control group" | group == "diagnosed group")
+res.ftest <- var.test(folw_n ~ group, data = df_folw_23)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_folw_23 <- t.test(folw_n ~ group, data = df_folw_23, var.equal = TRUE)
+res_folw_23
+# Group 1 vs. Group 3
+# Test whether the two populations have the same variances
+df_folw_13 <- df_folw %>%
+  filter(group == "depression group" | group == "diagnosed group")
+res.ftest <- var.test(folw_n ~ group, data = df_folw_13)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_folw_13 <- t.test(folw_n ~ group, data = df_folw_13, var.equal = TRUE)
+res_folw_13
+```
+
+
+```{r}
+# Statistical Analysis - Comparison the Friends over three groups
+# Prepare dataset
+df_frid <- cbind.fill(dp_agg$group, dp_agg$friends_count)
+colnames(df_frid) <- c("group", "frid_n")
+
+# Group 1 vs. Group 2
+# Test whether the two populations have the same variances
+df_frid_12 <- df_frid %>%
+  filter(group == "depression group" | group == "control group")
+res.ftest <- var.test(frid_n ~ group, data = df_frid_12)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_frid_12 <- t.test(frid_n ~ group, data = df_frid_12, var.equal = TRUE)
+res_frid_12
+# Group 2 vs. Group 3
+# Test whether the two populations have the same variances
+df_frid_23 <- df_frid %>%
+  filter(group == "control group" | group == "diagnosed group")
+res.ftest <- var.test(frid_n ~ group, data = df_frid_23)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_frid_23 <- t.test(frid_n ~ group, data = df_frid_23, var.equal = TRUE)
+res_frid_23
+# Group 1 vs. Group 3
+# Test whether the two populations have the same variances
+df_frid_13 <- df_frid %>%
+  filter(group == "depression group" | group == "diagnosed group")
+res.ftest <- var.test(frid_n ~ group, data = df_frid_13)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_frid_13 <- t.test(frid_n ~ group, data = df_frid_13, var.equal = TRUE)
+res_frid_13
+```
+
+
+```{r}
+# Statistical Analysis - Comparison the Statuses over three groups
+# Prepare dataset
+df_stat <- cbind.fill(dp_agg$group, dp_agg$statuses_count)
+colnames(df_stat) <- c("group", "stat_n")
+
+# Group 1 vs. Group 2
+# Test whether the two populations have the same variances
+df_stat_12 <- df_stat %>%
+  filter(group == "depression group" | group == "control group")
+res.ftest <- var.test(stat_n ~ group, data = df_stat_12)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_stat_12 <- t.test(stat_n ~ group, data = df_stat_12, var.equal = FALSE)
+res_stat_12
+# Group 2 vs. Group 3
+# Test whether the two populations have the same variances
+df_stat_23 <- df_stat %>%
+  filter(group == "control group" | group == "diagnosed group")
+res.ftest <- var.test(stat_n ~ group, data = df_stat_23)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_stat_23 <- t.test(stat_n ~ group, data = df_stat_23, var.equal = TRUE)
+res_stat_23
+# Group 1 vs. Group 3
+# Test whether the two populations have the same variances
+df_stat_13 <- df_stat %>%
+  filter(group == "depression group" | group == "diagnosed group")
+res.ftest <- var.test(stat_n ~ group, data = df_stat_13)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_stat_13 <- t.test(stat_n ~ group, data = df_stat_13, var.equal = TRUE)
+res_stat_13
+```
+
+
+```{r}
+# Statistical Analysis - Comparison the Favourites over three groups
+# Prepare dataset
+df_favr <- cbind.fill(dp_agg$group, dp_agg$favourites_count)
+colnames(df_favr) <- c("group", "favr_n")
+
+# Group 1 vs. Group 2
+# Test whether the two populations have the same variances
+df_favr_12 <- df_favr %>%
+  filter(group == "depression group" | group == "control group")
+res.ftest <- var.test(favr_n ~ group, data = df_favr_12)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_favr_12 <- t.test(favr_n ~ group, data = df_favr_12, var.equal = TRUE)
+res_favr_12
+# Group 2 vs. Group 3
+# Test whether the two populations have the same variances
+df_favr_23 <- df_favr %>%
+  filter(group == "control group" | group == "diagnosed group")
+res.ftest <- var.test(favr_n ~ group, data = df_favr_23)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_favr_23 <- t.test(favr_n ~ group, data = df_favr_23, var.equal = TRUE)
+res_favr_23
+# Group 1 vs. Group 3
+# Test whether the two populations have the same variances
+df_favr_13 <- df_favr %>%
+  filter(group == "depression group" | group == "diagnosed group")
+res.ftest <- var.test(favr_n ~ group, data = df_favr_13)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_favr_13 <- t.test(favr_n ~ group, data = df_favr_13, var.equal = TRUE)
+res_favr_13
+```
+
+```{r}
+# Set date format
+dp_all$date <- as.Date(dp_all$created_at)
+
+# Set time format
+dp_all$time <- ymd_hms(dp_all$created_at)
+```
+
+```{r}
+# Time analysis
+# Extract date to cover the NA
+dp_all$date <- as.Date(dp_all$time)
+# Create new time variables: roundhour, hour, roundmin, minute
+ymd(19970316); myd(03199716); dmy(16031997)
+test_date <- ymd_hms("1997-03-16 12:01:30")
+dp_all$roundhour <- round_date(dp_all$time, 'hour')
+dp_all$roundmin <- round_date(dp_all$time, "minute")
+dp_all$hour <- hour(dp_all$roundhour)
+dp_all$minute <- minute(dp_all$roundmin)
+# Graph twitter counts in 24 hours
+dp_all %>%
+  group_by(group, hour) %>%
+  summarise(total = n()) %>%
+  filter(group == "depression group" | group == "diagnosed group") %>%
+  ggplot() +
+  geom_bar(mapping = aes(x = hour, y = total, fill = group), stat = "identity")+
+  geom_line(mapping = aes(x = hour, y = total, fill = group), colour = "navy") +
+  theme_classic() 
+# Focus on group 3
+dp_all %>%
+  group_by(group, hour) %>%
+  summarise(total = n()) %>%
+  filter(group == "diagnosed group") %>%
+  ggplot() +
+  geom_bar(mapping = aes(x = hour, y = total), stat = "identity", fill = "lightblue") +
+  geom_line(mapping = aes(x = hour, y = total), colour = "navy") +
+  theme_classic()
+```
+
+
+```{r}
+# Sentiment analysis
+# Extract text
+dp_all$twttext <- as.character(dp_all$text)
+# Text cleaning
+dp_all$twttext %<>%
+  gsub("(RT|via)((?:\\b\\w*@\\w+)+)", " ", .) %>%
+  gsub("http[^[:blank:]]+", " ", .) %>%
+  gsub("@\\w+", " ", .) %>%
+  gsub("[[:punct:]]", " ", .) %>%
+  gsub("[^[:alnum:]]", " ", .)
+ 
+# All the groups
+sentiment <- get_nrc_sentiment(dp_all$twttext, language = 'english')
+stm.positive <- sum(sentiment$positive)
+stm.anger <- sum(sentiment$anger)
+stm.anticipation <- sum(sentiment$anticipation)
+stm.disgust <- sum(sentiment$disgust)
+stm.fear <- sum(sentiment$fear)
+stm.joy <- sum(sentiment$joy)
+stm.sadness <- sum(sentiment$sadness)
+stm.surprise <- sum(sentiment$surprise)
+stm.trust <- sum(sentiment$trust)
+stm.negative <- sum(sentiment$negative)
+```
+
+
+# Group by groups
+
+```{r}
+# Group 1 sentiment score bar
+dp_all_1 <- filter(dp_all, group == "depression group") 
+sentiment_1 <- get_nrc_sentiment(dp_all_1$twttext, language = 'english') 
+stm.positive_1 <- sum(sentiment_1$positive) 
+stm.anger_1 <- sum(sentiment_1$anger) 
+stm.anticipation_1 <- sum(sentiment_1$anticipation) 
+stm.disgust_1 <- sum(sentiment_1$disgust) 
+stm.fear_1 <- sum(sentiment_1$fear) 
+stm.joy_1 <- sum(sentiment_1$joy) 
+stm.sadness_1 <- sum(sentiment_1$sadness) 
+stm.surprise_1 <- sum(sentiment_1$surprise) 
+stm.trust_1 <- sum(sentiment_1$trust) 
+stm.negative_1 <- sum(sentiment_1$negative) 
+
+sentiment_type_1 <- c("Positive", "Anger", "Anticipation", "Disgust", "Fear", "Joy", "Sadness", "Surprise", "Trust", "Negative") 
+score_1 <- c(stm.positive_1, stm.anger_1, stm.anticipation_1, stm.disgust_1, stm.fear_1, stm.joy_1, stm.sadness_1, stm.surprise_1, stm.trust_1, stm.negative_1) 
+sentiment_data_1 <- data.frame(sentiment_type_1, score_1)
+yaxis_1 <- c(stm.positive_1, stm.anger_1, stm.anticipation_1, stm.disgust_1, stm.fear_1, stm.joy_1, stm.sadness_1, stm.surprise_1, stm.trust_1, stm.negative_1)
+xaxis <- c("Positive", "Anger", "Anticipation", "Disgust", "Fear", "Joy", "Sadness", "Surprise", "Trust", "Negative")
+color <- c("palegreen4", "orangered4", "palegreen3", "orangered3", "orangered4", "palegreen4", "orangered3", "palegreen3", "palegreen4", "orangered4")
+yrange_1 <- range(0, 50000)
+barplot(yaxis_1, names.arg = xaxis, xlab = "Sentiment Categories", ylab = "Sentiment Score of depression group", main = "Depression group: Twitter sentiment for 'Depresson'", col = color, border = "white", ylim = yrange_1, cex.axis = 0.6, cex.names = 0.6)
+stm_table_1 <- c(stm.positive_1, stm.anger_1, stm.anticipation_1, stm.disgust_1, stm.fear_1, stm.joy_1, stm.sadness_1, stm.surprise_1, stm.trust_1, stm.negative_1)
+```
+
+
+```{r}
+# Group 2 sentiment score bar
+dp_all_2 <- filter(dp_all, group == "control group") 
+sentiment_2 <- get_nrc_sentiment(dp_all_2$twttext, language = 'english') 
+stm.positive_2 <- sum(sentiment_2$positive) 
+stm.anger_2 <- sum(sentiment_2$anger) 
+stm.anticipation_2 <- sum(sentiment_2$anticipation) 
+stm.disgust_2 <- sum(sentiment_2$disgust) 
+stm.fear_2 <- sum(sentiment_2$fear) 
+stm.joy_2 <- sum(sentiment_2$joy) 
+stm.sadness_2 <- sum(sentiment_2$sadness) 
+stm.surprise_2 <- sum(sentiment_2$surprise) 
+stm.trust_2 <- sum(sentiment_2$trust) 
+stm.negative_2 <- sum(sentiment_2$negative) 
+
+sentiment_type_2 <- c("Positive", "Anger", "Anticipation", "Disgust", "Fear", "Joy", "Sadness", "Surprise", "Trust", "Negative") 
+score_2 <- c(stm.positive_2, stm.anger_2, stm.anticipation_2, stm.disgust_2, stm.fear_2, stm.joy_2, stm.sadness_2, stm.surprise_2, stm.trust_2, stm.negative_2) 
+sentiment_data_2 <- data.frame(sentiment_type_2, score_2)
+yaxis_2 <- c(stm.positive_2, stm.anger_2, stm.anticipation_2, stm.disgust_2, stm.fear_2, stm.joy_2, stm.sadness_2, stm.surprise_2, stm.trust_2, stm.negative_2)
+xaxis <- c("Positive", "Anger", "Anticipation", "Disgust", "Fear", "Joy", "Sadness", "Surprise", "Trust", "Negative")
+color <- c("palegreen4", "orangered4", "palegreen3", "orangered3", "orangered4", "palegreen4", "orangered3", "palegreen3", "palegreen4", "orangered4")
+yrange_2 <- range(0, yaxis_2)
+barplot(yaxis_2, names.arg = xaxis, xlab = "Sentiment Categories", ylab = "Sentiment Score of control group", main = "Control group: Twitter sentiment for 'Depresson'", col = color, border = "white", ylim = yrange_2, cex.axis = 0.6, cex.names = 0.6)
+stm_table_2 <- c(stm.positive_2, stm.anger_2, stm.anticipation_2, stm.disgust_2, stm.fear_2, stm.joy_2, stm.sadness_2, stm.surprise_2, stm.trust_2, stm.negative_2)
+```
+
+```{r}
+# Group 3 sentiment score bar
+dp_all_3 <- filter(dp_all, group == "diagnosed group") 
+sentiment_3 <- get_nrc_sentiment(dp_all_3$twttext, language = 'english') 
+stm.positive_3 <- sum(sentiment_3$positive) 
+stm.anger_3 <- sum(sentiment_3$anger) 
+stm.anticipation_3 <- sum(sentiment_3$anticipation) 
+stm.disgust_3 <- sum(sentiment_3$disgust) 
+stm.fear_3 <- sum(sentiment_3$fear) 
+stm.joy_3 <- sum(sentiment_3$joy) 
+stm.sadness_3 <- sum(sentiment_3$sadness) 
+stm.surprise_3 <- sum(sentiment_3$surprise) 
+stm.trust_3 <- sum(sentiment_3$trust) 
+stm.negative_3 <- sum(sentiment_3$negative) 
+
+sentiment_type_3 <- c("Positive", "Anger", "Anticipation", "Disgust", "Fear", "Joy", "Sadness", "Surprise", "Trust", "Negative") 
+score_3 <- c(stm.positive_3, stm.anger_3, stm.anticipation_3, stm.disgust_3, stm.fear_3, stm.joy_3, stm.sadness_3, stm.surprise_3, stm.trust_3, stm.negative_3) 
+sentiment_data_3 <- data.frame(sentiment_type_3, score_3)
+yaxis_3 <- c(stm.positive_3, stm.anger_3, stm.anticipation_3, stm.disgust_3, stm.fear_3, stm.joy_3, stm.sadness_3, stm.surprise_3, stm.trust_3, stm.negative_3)
+xaxis <- c("Positive", "Anger", "Anticipation", "Disgust", "Fear", "Joy", "Sadness", "Surprise", "Trust", "Negative")
+color <- c("palegreen4", "orangered4", "palegreen3", "orangered3", "orangered4", "palegreen4", "orangered3", "palegreen3", "palegreen4", "orangered4")
+yrange_3 <- range(0, yaxis_3)
+barplot(yaxis_3, names.arg = xaxis, xlab = "Sentiment Categories", ylab = "Sentiment Score of diagnosed group", main = "Diagnosed group: Twitter sentiment for 'Depresson'", col = color, border = "white", ylim = yrange_3, cex.axis = 0.6, cex.names = 0.6)
+stm_table_3 <- c(stm.positive_3, stm.anger_3, stm.anticipation_3, stm.disgust_3, stm.fear_3, stm.joy_3, stm.sadness_3, stm.surprise_3, stm.trust_3, stm.negative_3)
+```
+
+
+```{r}
+# linear regression
+
+# Merge the columns of sentiment score into data
+sentiment_test <- get_nrc_sentiment(dp_all$twttext, language = 'english')
+sentiment_tt <- cbind(dp_all, sentiment_test)
+
+# Convert the negative sentiment score to negative integers, add up to get a total sentiment score
+sentiment_tt$sentiment_score <- sentiment_tt$positive + sentiment_tt$negative*(-1)
+
+# model_group1_all
+sentiment_tt_1 <- filter(sentiment_tt, group == "depression group")
+fit_group1 <- lm(sentiment_score ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_1)
+summary(fit_group1)
+
+# model_group1_negative
+sentiment_tt_1 <- filter(sentiment_tt, group == "depression group")
+fit_group1_negative <- lm(negative ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_1)
+summary(fit_group1_negative)
+
+# model_group1_positive
+sentiment_tt_1 <- filter(sentiment_tt, group == "depression group")
+fit_group1_positive <- lm(positive ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_1)
+summary(fit_group1_positive)
+
+# model_group2_all
+sentiment_tt_2 <- filter(sentiment_tt, group == "control group")
+fit_group2 <- lm(sentiment_score ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_2)
+summary(fit_group2)
+
+# model_group2_negative
+sentiment_tt_2 <- filter(sentiment_tt, group == "control group")
+fit_group2_negative <- lm(negative ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_2)
+summary(fit_group2_negative)
+
+# model_group2_positive
+sentiment_tt_2 <- filter(sentiment_tt, group == "control group")
+fit_group2_positive <- lm(positive ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_2)
+summary(fit_group2_positive)
+
+# model_group3_all
+sentiment_tt_3 <- filter(sentiment_tt, group == "diagnosed group")
+fit_group3 <- lm(sentiment_score ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_3)
+summary(fit_group3)
+
+# model_group3_negative
+sentiment_tt_3 <- filter(sentiment_tt, group == "diagnosed group")
+fit_group3_negative <- lm(negative ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_3)
+summary(fit_group3_negative)
+
+# model_group3_positive
+sentiment_tt_3 <- filter(sentiment_tt, group == "diagnosed group")
+fit_group3_positive <- lm(positive ~ followers_count + friends_count + statuses_count + favourites_count, data = sentiment_tt_3)
+summary(fit_group3_positive)
+```
+
+```{r}
+# Statistical Analysis - Comparison the negative sentiment over three groups
+# Negative
+# Prepare dataset
+df_nega <- sentiment_tt %>%
+  select(group, negative)
+
+# Group 1 vs. Group 2
+# Test whether the two populations have the same variances
+df_nega_12 <- df_nega %>%
+  filter(group == "depression group" | group == "control group")
+res.ftest <- var.test(negative ~ group, data = df_nega_12)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_nega_12 <- t.test(negative ~ group, data = df_nega_12, var.equal = TRUE)
+res_nega_12
+
+# Group 2 vs. Group 3
+# Test whether the two populations have the same variances
+df_nega_23 <- df_nega %>%
+  filter(group == "control group" | group == "diagnosed group")
+res.ftest <- var.test(negative ~ group, data = df_nega_23)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_nega_23 <- t.test(negative ~ group, data = df_nega_23, var.equal = TRUE)
+res_nega_23
+# Group 1 vs. Group 3
+# Test whether the two populations have the same variances
+df_nega_13 <- df_nega %>%
+  filter(group == "depression group" | group == "diagnosed group")
+res.ftest <- var.test(negative ~ group, data = df_nega_13)
+res.ftest
+#The p-value of F-test is p < 0.05. It’s smaller than the significance level alpha = 0.05. In conclusion, there is a significant difference between the variances of the two sets of data.
+#t-test
+res_nega_13 <- t.test(negative ~ group, data = df_nega_13, var.equal = TRUE)
+res_nega_13
+```
+
+```{r}
+# Statistical Analysis - Comparison the positive sentiment over three groups
+# Positive
+# Prepare dataset
+df_pstv <- sentiment_tt %>%
+  select(group, positive)
+
+# Group 1 vs. Group 2
+# Test whether the two populations have the same variances
+df_pstv_12 <- df_pstv %>%
+  filter(group == "depression group" | group == "control group")
+res.ftest <- var.test(positive ~ group, data = df_pstv_12)
+res.ftest
+#t-test
+res_pstv_12 <- t.test(positive ~ group, data = df_pstv_12, var.equal = TRUE)
+res_pstv_12
+
+# Group 2 vs. Group 3
+# Test whether the two populations have the same variances
+df_pstv_23 <- df_pstv %>%
+  filter(group == "control group" | group == "diagnosed group")
+res.ftest <- var.test(positive ~ group, data = df_pstv_23)
+res.ftest
+#t-test
+res_pstv_23 <- t.test(positive ~ group, data = df_pstv_23, var.equal = TRUE)
+res_pstv_23
+
+# Group 1 vs. Group 3
+# Test whether the two populations have the same variances
+df_pstv_13 <- df_pstv %>%
+  filter(group == "depression group" | group == "diagnosed group")
+res.ftest <- var.test(positive ~ group, data = df_pstv_13)
+res.ftest
+#t-test
+res_pstv_13 <- t.test(positive ~ group, data = df_pstv_13, var.equal = TRUE)
+res_pstv_13
+```

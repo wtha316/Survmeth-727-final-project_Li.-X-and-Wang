@@ -1,0 +1,101 @@
+```{r}
+install.packages("rtweet")
+install.packages("tidytext")
+install.packages("ggmap")
+install.packages("tm")
+install.packages("syuzhet")
+install.packages("twitteR")
+library(rtweet)
+library(twitteR)
+library(syuzhet)
+library(tm)
+library(SnowballC)
+library(tidytext)
+library(ggmap)
+library(dplyr)
+library(ggplot2)
+
+```
+
+```{r}
+create_token(
+  app = "Data Display Social Research",
+  consumer_key = "kSGIiodRghgYq289SZBRP5hlO",
+  consumer_secret = "jFLbGoOsgxuhon4YLX51Lb5Q79EgIwjjJSVYu3SZEa6x7EkLl2",
+  access_token = "1181245045287948288-tjS90xmIaMmRsAAEaCDUuM8jkhlbE9",
+  access_secret = "4K45yuHd4gSXZXMeRu11Tp8SsYda7NXzzYKSC41XjDw12"
+)
+
+create_token(
+  app = "Data Display Social Research",
+  consumer_key = "3RdnGQ0hETW7LHbQdZtI14VRD",
+  consumer_secret = "0mxU7gGQSgSF2NgYJVuCC9au026ut5ncUJLr13ppU8Unw9a2Qx",
+  access_token = "1181245045287948288-WkVfbTxp82YMBP64F5GjH6oyt9Ux8d",
+  access_secret = "gWOYYYVyv7BzUhYSy8p4a3HXw5MPGi8RxUi30qciaQdEf"
+)
+```
+
+```{r}
+get_token()
+```
+
+
+```{r}
+# searching for tweets
+dp1 <- search_tweets("depression", lang = "en", include_rts = FALSE, n = 100)
+dp2 <- search_tweets(" ", lang = "en",include_rts = FALSE, n = 100)
+dp3a <- search_tweets(q = "I AND diagnosed AND depression", lang = "en", include_rts = FALSE, n = 100)
+dp3b <- search_tweets(q = "I am suffering AND depression", lang = "en", include_rts = FALSE, n = 100)
+dp3c <- search_tweets(q = "I AND depression meds", lang = "en",include_rts = FALSE, n = 100)
+dp3d <- search_tweets(q = "I AND medication AND depression", lang = "en",include_rts = FALSE, n = 100)
+dp3e <- search_tweets(q = "I AND have AND depression AND meds", lang = "en",include_rts = FALSE, n = 100)
+dp3f <- search_tweets(q = "I AND take AND depression meds", lang = "en",include_rts = FALSE, n = 100)
+dp3g <- search_tweets(q = "I AND Prozac AND depressed", lang = "en",include_rts = FALSE, n = 100)
+dp3h <- search_tweets(q = "I AND Prozac AND deprssion", lang = "en",include_rts = FALSE, n = 100)
+dp3i <- search_tweets(q = "I AND taking depression meds", lang = "en",include_rts = FALSE, n = 100)
+dp3j <- search_tweets(q = "I AND therapy AND depression", lang = "en",include_rts = FALSE, n = 100)
+dp3k <- search_tweets(q = "I battling AND depression", lang = "en",include_rts = FALSE, n = 100)
+dp3l <- search_tweets(q = "I AND clinical AND depression", lang = "en",include_rts = FALSE, n = 100)
+dp3m <- search_tweets(q = "I AND living with depression", lang = "en",include_rts = FALSE, n = 100)
+dp3n <- search_tweets(q = "How to tell AND depression", lang = "en",include_rts = FALSE, n = 100)
+```
+
+```{r}
+# merge dp 3 from a-n, trans dp3 to data.frame
+dp3 <- rbind(dp3a, dp3b, dp3c, dp3d, dp3e, dp3f, dp3g, dp3h, dp3i, dp3j, dp3k, dp3l, dp3m, dp3n)
+dp3 <- data.frame(dp3)
+```
+
+```{r}
+# delete tweets including "depression" in dp2, 377 obs
+dp2 <- setdiff(dp2,dp1)
+```
+
+```{r}
+# delete hashtags & urls in dp1, dp2, dp3
+dp1 <- subset(dp1, is.na(dp1$hashtags))
+dp1 <- subset(dp1, is.na(dp1$url))
+dp2 <- subset(dp2, is.na(dp2$hashtags))
+dp2 <- subset(dp2, is.na(dp2$url))
+dp3 <- subset(dp3, is.na(dp3$hashtags))
+dp3 <- subset(dp3, is.na(dp3$url))
+```
+
+```{r}
+# extract variables from data.frame
+dp1 <- dp1 %>%
+  select (user_id, created_at, text, source, display_text_width, location, followers_count, friends_count, listed_count, statuses_count, favourites_count, account_created_at)
+
+dp2 <- dp2 %>%
+  select (user_id, created_at, text, source, display_text_width, location, followers_count, friends_count, listed_count, statuses_count, favourites_count, account_created_at)
+
+dp3 <- dp3 %>%
+  select (user_id, created_at, text, source, display_text_width, location, followers_count, friends_count, listed_count, statuses_count, favourites_count, account_created_at)
+```
+
+```{r}
+# export data to excel format
+save_as_csv(dp1, "dp1-date.csv")
+save_as_csv(dp2, "dp2-date.csv")
+save_as_csv(dp3, "dp3-date.csv")
+```
